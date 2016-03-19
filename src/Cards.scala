@@ -100,6 +100,17 @@ object Cards {
 
     override def toString = valueToString(value) + " of " + suitToString(suit)
 
+    /**
+     * Compare a card to this card, uses natural value ordering.
+     *
+     * More specifically, this `compare` method allows Scala
+     * to handle < = > operators for cards, unlike Java's compareTo.
+     * In this way, it is more like Rust in that one can override the
+     * natural types that < = > can process.
+     *
+     * @param  {Card} that: Card          another cards
+     * @return {Int}       < if less, 0 if the same, > if more
+     */
     def compare(that: Card) = valueToInt(value) - valueToInt(that.value)
   }
 
@@ -119,6 +130,22 @@ object Cards {
 
     def size():Int = {
       return cards.size
+    }
+
+    def hasCards():Boolean = {
+      return size() > 0
+    }
+
+    // do we need this?
+    def getCard():Option[Card] = {
+      return cards.lift(0)
+    }
+
+    def giveCard(that: Deck) {
+      getCard() match {
+        case Some(card) => {cards.remove(0); that.addCard(card)}
+        case None => {} // nothing
+      }
     }
 
   }

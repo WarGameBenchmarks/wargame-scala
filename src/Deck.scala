@@ -19,7 +19,6 @@ class Deck(c: ArrayBuffer[Card]) {
 
   // Add a card
   def addCard(c: Card) {
-    println(c)
     cards += c
   }
 

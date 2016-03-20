@@ -1,4 +1,4 @@
-object Cards {
+object Card {
 
 
   /**
@@ -112,62 +112,6 @@ object Cards {
      * @return {Int}       < if less, 0 if the same, > if more
      */
     def compare(that: Card) = valueToInt(value) - valueToInt(that.value)
-  }
-
-  import scala.collection.mutable.ArrayBuffer
-
-
-  class Deck(c: ArrayBuffer[Card]) {
-    var cards: ArrayBuffer[Card] = c
-
-    def this() {
-      this(ArrayBuffer())
-    }
-
-    def addCard(c: Card) {
-      cards += c
-    }
-
-    def size():Int = {
-      return cards.size
-    }
-
-    def hasCards():Boolean = {
-      return size() > 0
-    }
-
-    // do we need this?
-    def getCard():Option[Card] = {
-      return cards.lift(0)
-    }
-
-    def giveCard(that: Deck) {
-      getCard() match {
-        case Some(card) => {cards.remove(0); that.addCard(card)}
-        case None => {} // nothing
-      }
-    }
-
-  }
-
-  object Deck {
-    /**
-     * Generate a fresh deck with the 52 card, 4 suit of 13 cards each setup.
-     * @return {Deck} return a deck of 52 cards
-     */
-    def fresh(): Deck = {
-      val deck = new Deck()
-      val suits = List(Hearts, Diamonds, Clubs, Spades)
-      val values = List(Two, Three, Four, Five,
-                    Six, Seven, Eight, Nine, Ten,
-                    Jack, Queen, King, Ace)
-      for (s <- suits) {
-        for (v <- values) {
-          deck.addCard(new Card(v, s))
-        }
-      }
-      return deck
-    }
   }
 
 }

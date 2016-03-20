@@ -1,20 +1,19 @@
-import Cards._
+import Card._
+import Deck._
 
 object App {
   def main(args: Array[String]): Unit = {
 
-    println("WarGame!")
-
-    val card1 = new Card(CardValue.Six, CardSuit.Hearts)
-    val card2 = new Card(CardValue.Jack, CardSuit.Diamonds)
-
-    println(card1)
-    println(card2)
-
-    val deck1 = new Deck()
-    val deck2 = Deck.fresh()
-    println(deck1.size())
-    println(deck2.size())
+    val winner = new Deck()
+    val original = Deck.fresh()
+    original.shuffle()
+    println("----")
+    println(original)
+    println("----")
+    val (deck1, deck2) = original.split()
+    println("----")
+    println("----")
+    println("----")
 
   }
 }

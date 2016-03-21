@@ -2,4 +2,4 @@
 
 # scalac -sourcepath src/ -d build/ src/App.scala
 
-scalac -sourcepath src/ -d build/ src/*.scala
+scalac -deprecation -sourcepath src/ -d build/ src/*.scala

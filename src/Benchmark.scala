@@ -1,46 +1,60 @@
 import Card._
 import Deck._
 
+import akka.actor.Actor
+import akka.actor.ActorSystem
+import akka.actor.Props
+import akka.actor._
+
 
 class Benchmark {
 
   val MS = 1000000
   val NS = 1000000000
 
+  case object PingMessage
+  case object PongMessage
+  case object StartMessage
+  case object StopMessage
+
+  class Ping(pong: ActorRef, c: Int) extends Actor {
+    var count = c
+    def processAndPrint { count = count - 1; println("ping: " + count) }
+    def receive = {
+      case StartMessage =>
+          processAndPrint
+          pong ! PingMessage
+      case PongMessage =>
+          processAndPrint
+          if (count < 5) {
+            sender ! StopMessage
+            context.stop(self)
+            println("ping stopped")
+          } else {
+            sender ! PingMessage
+          }
+    }
+  }
+
+  class Pong() extends Actor {
+  def receive = {
+    case PingMessage =>
+        println("  pong")
+        sender ! PongMessage
+    case StopMessage =>
+        context.stop(self)
+        println("pong stopped")
+  }
+}
+
+
   def benchmark() {
-
-    /**
-     * Pretend this is 4 threads, if this were finished.
-     *
-     *
-     * On my 2011MBA, this setup will produce ~2000 games across
-     * 4 threads, about 500 each.
-     * With 1 thread, this same setup produces ~2000.
-     *
-     * I suppose that implementing the Message Passing | Actor
-     * system from Scala might be insightful, but at this point,
-     * with the performance so poor, this might as well be a dead end.
-     *
-     * Thanks for reading though.
-     */
-
-    val thread1 = new WarGameThread
-    val thread2 = new WarGameThread
-    val thread3 = new WarGameThread
-    val thread4 = new WarGameThread
-    println("before start")
-    thread1.start
-    thread2.start
-    thread3.start
-    thread4.start
-    println("before delay")
-    Thread.sleep(1000)
-    println("after delay")
-    thread1.end
-    thread2.end
-    thread3.end
-    thread4.end
-    println("after end")
+    val system = ActorSystem("PingPongSystem")
+    val pong = system.actorOf(Props(new Pong), name = "pong")
+    val ping = system.actorOf(Props(new Ping(pong, 10000)), name = "ping")
+    // start them going
+    ping ! StartMessage
+    println("???")
   }
 
 

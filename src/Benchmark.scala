@@ -5,56 +5,97 @@ import akka.actor.Actor
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor._
-
+import akka.event.Logging
+import akka.util.Timeout
 
 class Benchmark {
 
-  val MS = 1000000
-  val NS = 1000000000
+  sealed trait MessageBase
 
-  case object PingMessage
-  case object PongMessage
-  case object StartMessage
-  case object StopMessage
+  case object Stop
 
-  class Ping(pong: ActorRef, c: Int) extends Actor {
-    var count = c
-    def processAndPrint { count = count - 1; println("ping: " + count) }
+  case class Progress(amount: Int)
+
+  class GameActor extends Actor {
+    val game = new WarGame()
+    var running: Boolean = true
+
+
     def receive = {
-      case StartMessage =>
-          processAndPrint
-          pong ! PingMessage
-      case PongMessage =>
-          processAndPrint
-          if (count < 5) {
-            sender ! StopMessage
-            context.stop(self)
-            println("ping stopped")
-          } else {
-            sender ! PingMessage
-          }
+      case "start" => {
+        println("game actor: started")
+        while (running) {
+          game.play()
+          sender ! "progress"
+        }
+      }
+      case "stop" => {
+        println("game actor: stopping")
+        running = false
+        context.stop(self)
+      }
+      case _       => {
+        println("game actor: error")
+        sender ! "error"
+      }
     }
   }
 
-  class Pong() extends Actor {
-  def receive = {
-    case PingMessage =>
-        println("  pong")
-        sender ! PongMessage
-    case StopMessage =>
-        context.stop(self)
-        println("pong stopped")
-  }
-}
+  class Master(actors: Array[ActorRef]) extends Actor {
 
+    var total:Int = 0
+    var stopped:Int = 0
+
+    def receive = {
+      case "start" => {
+        println("started")
+        for (actor <- actors) {
+          actor ! "start"
+        }
+      }
+      case "progress" => {
+          total += 1
+          println("progress: " + total)
+
+          if (total > 2000) {
+            for (actor <- actors) {
+              actor ! "stop"
+            }
+            println("stopping")
+          }
+      }
+      case "stop" => {
+          stopped += 1
+          if (stopped >= actors.length) {
+            context.stop(self)
+          }
+      }
+      case "error" => {
+        println("error")
+        for (actor <- actors) {
+          actor ! "stop"
+        }
+      }
+      case  _     => println("unknown")
+    }
+  }
 
   def benchmark() {
-    val system = ActorSystem("PingPongSystem")
-    val pong = system.actorOf(Props(new Pong), name = "pong")
-    val ping = system.actorOf(Props(new Ping(pong, 10000)), name = "ping")
-    // start them going
-    ping ! StartMessage
-    println("???")
+    val system = ActorSystem("BenchmarkSystem")
+
+    val count:Int = 2
+    val actors = new Array[ActorRef](count)
+
+    for (i <- 0 until count) {
+      val actor = system.actorOf(Props(new GameActor), name = "GameActor" + i)
+      actors(i) = actor
+    }
+
+    val master = system.actorOf(Props(new Master(actors)), name = "Master")
+
+    master ! "start"
+
+    // system.shutdown
   }
 
 
